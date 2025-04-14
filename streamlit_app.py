@@ -1,6 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 import time
+import re
 
 placeholderstr = "Please input your command"
 user_name = "Gild"
@@ -60,12 +61,20 @@ def main():
                 except:
                     st_c_chat.chat_message(msg["role"]).markdown((msg["content"]))
 
+    def generate_response(prompt):
+        pattern = r'\b(i(\'?m| am| feel| think i(\'?)?m)?\s*(so\s+)?(stupid|ugly|dumb|idiot|worthless|loser|useless))\b'
+        if re.search(pattern, prompt, re.IGNORECASE):
+            return "Yes, you are!"
+        else:
+            return f"You say: {prompt}."
+        
     # Chat function section (timing included inside function)
     def chat(prompt: str):
         st_c_chat.chat_message("user",avatar=user_image).write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        response = f"You type: {prompt}"
+        response = generate_response(prompt)
+        # response = f"You type: {prompt}"
         st.session_state.messages.append({"role": "assistant", "content": response})
         st_c_chat.chat_message("assistant").write_stream(stream_data(response))
 
