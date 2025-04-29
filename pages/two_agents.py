@@ -7,7 +7,7 @@ import os
 
 # Import ConversableAgent class
 import autogen
-from autogen import ConversableAgent, LLMConfig
+from autogen import ConversableAgent, LLMConfig, Agent
 from autogen import AssistantAgent, UserProxyAgent, LLMConfig
 from autogen.code_utils import content_str
 from coding.constant import JOB_DEFINITION, RESPONSE_FORMAT
@@ -32,14 +32,13 @@ llm_config_gemini = LLMConfig(
 )
 
 with llm_config_gemini:
-    assistant = AssistantAgent(
-        name="assistant",
-        system_message=(
-        "You are a helpful storyteller assistant. "
-        "Please give me a story. After your result, say 'ALL DONE'. "
-        "Do not say 'ALL DONE' in the same response."
-        ),
-        max_consecutive_auto_reply=3
+    student_agent = ConversableAgent(
+        name="Student_Agent",
+        system_message="You are a student willing to learn.",
+    )
+    teacher_agent = ConversableAgent(
+        name="Teacher_Agent",
+        system_message="You are a math teacher.",
     )
 
 user_proxy = UserProxyAgent(
@@ -47,8 +46,6 @@ user_proxy = UserProxyAgent(
     human_input_mode="NEVER",
     is_termination_msg=lambda x: content_str(x.get("content")).find("ALL DONE") >= 0,
 )
-
-# Function Declaration 
 
 def stream_data(stream_str):
     for word in stream_str.split(" "):
@@ -80,6 +77,7 @@ def main():
 
     with st.sidebar:
         paging()
+
         selected_lang = st.selectbox("Language", ["English", "繁體中文"], index=0, on_change=save_lang, key="language_select")
         if 'lang_setting' in st.session_state:
             lang_setting = st.session_state['lang_setting']
@@ -130,15 +128,14 @@ def main():
 
     def generate_response(prompt):
 
-        prompt_template = f"Give me a story started from '{prompt}'"
-        # prompt_template = story_template.replace('##PROMPT##',prompt)
-        # prompt_template = classification_template.replace('##PROMPT##',prompt)
-        result = user_proxy.initiate_chat(
-        recipient=assistant,
-        message=prompt_template
+        chat_result = student_agent.initiate_chat(
+            teacher_agent,
+            message = prompt,
+            summary_method="reflection_with_llm",
+            max_turns=2,
         )
 
-        response = result.summary
+        response = chat_result.chat_history
         return response
 
     # Chat function section (timing included inside function)
@@ -148,9 +145,16 @@ def main():
 
         response = generate_response(prompt)
         # response = f"You type: {prompt}"
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st_c_chat.chat_message("assistant").write_stream(stream_data(response))
 
+        for entry in response:
+            role = entry.get('role')
+            name = entry.get('name')
+            content = entry.get('content')
+            st.session_state.messages.append({"role": f"{role}", "content": content})
+            if role != 'assistant':
+                st_c_chat.chat_message(f"{role}").write((content))
+            else:
+                st_c_chat.chat_message("user",avatar=user_image).write(content)
     
     if prompt := st.chat_input(placeholder=placeholderstr, key="chat_bot"):
         chat(prompt)
