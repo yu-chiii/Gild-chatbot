@@ -166,9 +166,6 @@ def main():
 
     # Chat function section (timing included inside function)
     def chat(prompt: str):
-        st_c_chat.chat_message("user",avatar=user_image).write(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
-
         response = generate_response(prompt)
         show_chat_history(response)
 
