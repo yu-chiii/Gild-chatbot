@@ -17,7 +17,8 @@ load_dotenv(override=True)
 
 # https://ai.google.dev/gemini-api/docs/pricing
 # URL configurations
-GEMINI_API_KEI = os.getenv('GEMINI_API_KEI', None)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', None)
+OPEN_API_KEY = os.getenv('OPEN_API_KEY', None)
 
 placeholderstr = "Please input your command"
 user_name = "Gild"
@@ -28,10 +29,16 @@ seed = 42
 llm_config_gemini = LLMConfig(
     api_type = "google", 
     model="gemini-2.0-flash-lite",                    # The specific model
-    api_key=GEMINI_API_KEI,   # Authentication
+    api_key=GEMINI_API_KEY,   # Authentication
 )
 
-with llm_config_gemini:
+llm_config_openai = LLMConfig(
+    api_type = "openai", 
+    model="gpt-4o-mini",                    # The specific model
+    api_key=OPEN_API_KEY,   # Authentication
+)
+
+with llm_config_openai:
     student_agent = ConversableAgent(
         name="Student_Agent",
         system_message="You are a student willing to learn.",
