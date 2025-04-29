@@ -45,7 +45,7 @@ with llm_config_gemini:
 user_proxy = UserProxyAgent(
     "user_proxy",
     human_input_mode="NEVER",
-    code_execution_config={"use_docker": False},
+    code_execution_config=False,
     is_termination_msg=lambda x: content_str(x.get("content")).find("ALL DONE") >= 0,
 )
 
