@@ -46,7 +46,7 @@ with llm_config_openai:
         "Please give me a story. After your result, say 'ALL DONE'. "
         "Do not say 'ALL DONE' in the same response."
         ),
-        max_consecutive_auto_reply=3
+        max_consecutive_auto_reply=2
     )
 
 user_proxy = UserProxyAgent(
@@ -146,8 +146,26 @@ def main():
         message=prompt_template
         )
 
-        response = result.summary
+        response = result.chat_history
         return response
+
+    def show_chat_history(chat_hsitory):
+        for entry in chat_hsitory:
+            role = entry.get('role')
+            name = entry.get('name')
+            content = entry.get('content')
+            st.session_state.messages.append({"role": f"{role}", "content": content})
+
+            if len(content.strip()) != 0: 
+                if 'ALL DONE' in content:
+                    return 
+                else: 
+                    if role != 'assistant':
+                        st_c_chat.chat_message(f"{role}").write((content))
+                    else:
+                        st_c_chat.chat_message("user",avatar=user_image).write(content)
+    
+        return 
 
     # Chat function section (timing included inside function)
     def chat(prompt: str):
@@ -155,10 +173,7 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         response = generate_response(prompt)
-        # response = f"You type: {prompt}"
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st_c_chat.chat_message("assistant").write_stream(stream_data(response))
-
+        show_chat_history(response)
     
     if prompt := st.chat_input(placeholder=placeholderstr, key="chat_bot"):
         chat(prompt)

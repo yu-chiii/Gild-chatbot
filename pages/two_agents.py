@@ -38,7 +38,7 @@ llm_config_openai = LLMConfig(
     api_key=OPEN_API_KEY,   # Authentication
 )
 
-with llm_config_openai:
+with llm_config_gemini:
     student_agent = ConversableAgent(
         name="Student_Agent",
         system_message="You are a student willing to learn.",
@@ -146,24 +146,32 @@ def main():
         response = chat_result.chat_history
         return response
 
+    def show_chat_history(chat_hsitory):
+        for entry in chat_hsitory:
+            role = entry.get('role')
+            name = entry.get('name')
+            content = entry.get('content')
+            st.session_state.messages.append({"role": f"{role}", "content": content})
+
+            if len(content.strip()) != 0: 
+                if 'ALL DONE' in content:
+                    return 
+                else: 
+                    if role != 'assistant':
+                        st_c_chat.chat_message(f"{role}").write((content))
+                    else:
+                        st_c_chat.chat_message("user",avatar=user_image).write(content)
+    
+        return 
+
     # Chat function section (timing included inside function)
     def chat(prompt: str):
         st_c_chat.chat_message("user",avatar=user_image).write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         response = generate_response(prompt)
-        # response = f"You type: {prompt}"
+        show_chat_history(response)
 
-        for entry in response:
-            role = entry.get('role')
-            name = entry.get('name')
-            content = entry.get('content')
-            st.session_state.messages.append({"role": f"{role}", "content": content})
-            if role != 'assistant':
-                st_c_chat.chat_message(f"{role}").write((content))
-            else:
-                st_c_chat.chat_message("user",avatar=user_image).write(content)
-    
     if prompt := st.chat_input(placeholder=placeholderstr, key="chat_bot"):
         chat(prompt)
 
