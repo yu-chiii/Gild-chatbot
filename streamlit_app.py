@@ -1,4 +1,3 @@
-import streamlit as st
 from openai import OpenAI
 import time
 import re
@@ -11,6 +10,8 @@ from autogen import ConversableAgent, LLMConfig
 from autogen import AssistantAgent, UserProxyAgent, LLMConfig
 from autogen.code_utils import content_str
 from coding.constant import JOB_DEFINITION, RESPONSE_FORMAT
+
+import streamlit as st
 
 # Load environment variables from .env file
 load_dotenv(override=True)
@@ -38,7 +39,7 @@ llm_config_openai = LLMConfig(
     api_key=OPEN_API_KEY,   # Authentication
 )
 
-with llm_config_openai:
+with llm_config_gemini:
     assistant = AssistantAgent(
         name="assistant",
         system_message=(
@@ -122,31 +123,31 @@ def main():
 
 
     story_template = ("Give me a story started from '##PROMPT##'."
-                      f"And remeber to mention user's name {user_name} in the end."
+                      f"And remeber to mention user's name {user_name} in the end. Add some emoji in the end of each sentence."
                       f"Please express in {lang_setting}")
 
     classification_template = ("You are a classification agent, your job is to classify what ##PROMPT## is according to the job definition list in <JOB_DEFINITION>"
     "<JOB_DEFINITION>"
     f"{JOB_DEFINITION}"
     "</JOB_DEFINITION>"
-    # "Please output in JSON-format only."
-    # "JSON-format is as below:"
-    # f"{RESPONSE_FORMAT}"
+    "Please output in JSON-format only."
+    "JSON-format is as below:"
+    f"{RESPONSE_FORMAT}"
     "Let's think step by step."
-    # f"Please output in {lang_setting}"
+    f"Please output in {lang_setting}"
     )
 
     def generate_response(prompt):
 
-        prompt_template = f"Give me a story started from '{prompt}'"
-        # prompt_template = story_template.replace('##PROMPT##',prompt)
+        # prompt_template = f"Give me a story started from '{prompt}'"
+        prompt_template = story_template.replace('##PROMPT##',prompt)
         # prompt_template = classification_template.replace('##PROMPT##',prompt)
         result = user_proxy.initiate_chat(
         recipient=assistant,
         message=prompt_template
         )
 
-        response = result.chat_history
+        response = result.summary
         return response
 
     def show_chat_history(chat_hsitory):
@@ -173,7 +174,10 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         response = generate_response(prompt)
-        show_chat_history(response)
+
+        st_c_chat.chat_message("assistant").write(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
     
     if prompt := st.chat_input(placeholder=placeholderstr, key="chat_bot"):
         chat(prompt)

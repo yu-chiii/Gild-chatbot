@@ -1,7 +1,9 @@
 JOB_DEFINITION = {
     "DOCUMENT_TASK": f"Handles all actions related to individual documents or files.",
     "SELF_INTRODUCE": """Provides an introduction or detailed information about the agent when the user requests information about you. e.g. 'What can you do for me?', 'Introduce yourself', 'What can I do?' """,
-    "LEARNING_TASK": [f"Handles actions where human want agent to learn from human inputs, including definition, feedback, clarification, corrections, or explanations from human inputs. The aim is to improve the agent's understanding, knowledge, or database over time through reinforcement learning, enabling it to adapt and enhance responses for future interactions.","Human express opinions, ideas, thoughts."],
+    "LEARNING_TASK": [
+        f"Handles actions where human want agent to learn from human inputs, including definition, feedback, clarification, corrections, or explanations from human inputs. The aim is to improve the agent's understanding, knowledge, or database over time through reinforcement learning, enabling it to adapt and enhance responses for future interactions.",
+        "Human express opinions, ideas, thoughts."],
     "REPLY_TASK": "Processes messages that begin with '[REPLY_TASK]', indicating that the response should follow the user's prompt exactly as specified, without any additional instructions or context.",
     "USER_PERSONA": "Manage user's profile settings or questions about user identity, e.g. asking user's name, profile; setting or modifying the user's name, preferences, or traits, and adjusts responses accordingly.",
     "AGENT_PERSONA": """Manage agent's profile settings or questions about agent identity, e.g. asking agent's name, "Who are you?", "What's your name?", profile; setting or modifying the agent's name, personality traits, or behavior. """,
