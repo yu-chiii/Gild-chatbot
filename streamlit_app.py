@@ -150,23 +150,6 @@ def main():
         response = result.summary
         return response
 
-    def show_chat_history(chat_hsitory):
-        for entry in chat_hsitory:
-            role = entry.get('role')
-            name = entry.get('name')
-            content = entry.get('content')
-            st.session_state.messages.append({"role": f"{role}", "content": content})
-
-            if len(content.strip()) != 0: 
-                if 'ALL DONE' in content:
-                    return 
-                else: 
-                    if role != 'assistant':
-                        st_c_chat.chat_message(f"{role}").write((content))
-                    else:
-                        st_c_chat.chat_message("user",avatar=user_image).write(content)
-    
-        return 
 
     # Chat function section (timing included inside function)
     def chat(prompt: str):
