@@ -3,6 +3,9 @@ import time
 import re
 from dotenv import load_dotenv
 import os
+import ast
+import pandas as pd
+import logging
 
 # Import ConversableAgent class
 import autogen
@@ -50,6 +53,36 @@ with llm_config_gemini:
         max_consecutive_auto_reply=2
     )
 
+with llm_config_openai:
+    tokens_refiner = ConversableAgent(
+        name="tokens_refiner",
+        system_message=(
+            "You are a Chinese token refinement expert.\n"
+            "Input: a list of tokens, already stop-word filtered.\n"
+            "Remove control characters, punctuation, meaningless tokens, and merge game-specific terminologies.\n"
+            "Return the cleaned tokens as a Python list."
+        )
+    )
+
+# 3. Helper to refine tokens via LLM
+def refine_by_llm(token_list):
+    prompt = f"Refine the following token list: {token_list}"
+    try:
+        
+        result = tokens_refiner.run(task=prompt)
+        
+        return ast.literal_eval(result.final_output)
+    except Exception as e:
+        logging.error(f"Error refining tokens: {e}")
+        return token_list
+
+def refine_tokens_list(token_list):
+    if not isinstance(token_list, list):
+        return token_list
+    
+    return refine_by_llm(token_list)
+
+
 user_proxy = UserProxyAgent(
     "user_proxy",
     human_input_mode="NEVER",
@@ -83,6 +116,24 @@ def main():
             },
         page_icon="img/favicon.ico"
     )
+
+    #Read Data
+    csv_path = 'article_data.csv'
+    if not os.path.exists(csv_path):
+        st.error(f"CSV file not found at {csv_path}. 請確認檔案已放在專案根目錄。")
+        return
+
+    df = pd.read_csv(csv_path)
+    st.subheader("Preview of Raw Data")
+    st.dataframe(df)
+
+    raw_col = 'tokenize and stop words without remove control'
+    if raw_col in df.columns:
+        st.subheader("Refining tokens with LLM skill")
+        df['tokens_refined'] = df[raw_col].apply(refine_tokens_list)
+        st.dataframe(df[[raw_col, 'tokens_refined']])
+    else:
+        st.warning(f"Column '{raw_col}' not found in CSV.")
 
     # Show title and description.
     st.title(f"💬 {user_name}'s Chatbot")
@@ -120,7 +171,14 @@ def main():
                         st_c_chat.chat_message(msg["role"],avatar=image_tmp).markdown((msg["content"]))
                 except:
                     st_c_chat.chat_message(msg["role"]).markdown((msg["content"]))
-
+    
+    st.header("Chat with Assistant")
+    user_prompt = st.text_input("Enter a prompt for story generation:")
+    if user_prompt:
+        st.markdown(f"**You:** {user_prompt}")
+        result = assistant.run(task=user_prompt)
+        response = result.final_output
+        st.markdown(f"**Assistant:** {response}")
 
     story_template = ("Give me a story started from '##PROMPT##'."
                       f"And remeber to mention user's name {user_name} in the end. Add some emoji in the end of each sentence."
